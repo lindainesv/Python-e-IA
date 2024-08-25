@@ -28,7 +28,6 @@ async def main():
 
     # Importando OpenAI LLM - GPT
     os.environ["GOOGLE_API_KEY"] = st.secrets['GOOGLE_API_KEY']
-    # "AIzaSyAM2W1hHvAigykhwbR8KqdVZyctvKq6pFo"
     llm = ChatGoogleGenerativeAI(model="gemini-pro")
 
     # Criando o agente stockPriceAnalyst
