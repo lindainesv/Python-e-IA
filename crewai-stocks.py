@@ -16,28 +16,26 @@ async def main():
     # Criando Função: fetch_stock_price
     def fetch_stock_price(ticket):
         # Metodo: stock
-        stock = yf.download(ticket, start="2024-01-01", end=datetime.now().strftime(f"%d-%m-%Y"))
+        stock = yf.download(ticket, start="2024-01-01", end=datetime.now().strftime(f"%Y-%m-%d"))
         return stock
 
     yft = Tool(  # metodo Tools
         name="Yahoo Finance Tool",
-        description="""Fetches stock prices for {ticket} from the last year about a 
-        specific stock from Yahoo Finance API""",  # descricao detalhada do que a função executa
+        description="""Obtém preços de ações para {ticket} do último ano sobre uma
+ação específica da API do Yahoo Finance""",  # descricao detalhada do que a função executa
         func=lambda ticket: fetch_stock_price(ticket),
     )
 
     # Importando OpenAI LLM - GPT
-    os.environ["GOOGLE_API_KEY"] = st.secrets['GOOGLE_API_KEY']
+    os.environ["GOOGLE_API_KEY"] = 'AIzaSyDFKkcFy6OD7OmdPW8kZtv9HmL0j4GSbcs'
     llm = ChatGoogleGenerativeAI(model="gemini-pro")
 
     # Criando o agente stockPriceAnalyst
     # DOC.: https://docs.crewai.com/core-concepts/Agents/#what-is-an-agent
     stockPriceAnalyst = Agent(
-        role="Senior stock price Analyst",
-        goal="Find the {ticket} stock price and analyses trends",  # Objetivo
-        backstory="""You're a highly experienced in analyzing the price of an
-        specific stock
-    and make prediction about its future price.""",
+        role="Analista Sênior de Preço de Ações",
+        goal="Encontre o preço das ações {ticket} e analise tendências",  # Objetivo
+        backstory="""Você tem muita experiência em analisar o preço de uma ação específica e fazer previsões sobre seu preço futuro.""",
         verbose=True,
         llm=llm,
         max_iter=5,
@@ -48,11 +46,10 @@ async def main():
 
     # Criando tarefa para o agente executar
     getStockPrice = Task(
-        description="""Analyze the stock {ticket} price history and create a trend
-        analyses of up, down or sideways""",
-        expected_output="""Specify the current trend stock price - up, down or
-        sideways.
-        eg. stock for 'AAPL, price UP'""",
+        description="""Analise o histórico de preços de ações {ticket} e crie análises de tendências de alta, baixa ou lateral""",
+        expected_output="""Especifique a tendência atual do preço das ações - para cima, para baixo ou
+para os lados.
+por exemplo, ações para 'AAPL, preço PARA CIMA'""",
         agent=stockPriceAnalyst,
     )
 
@@ -61,18 +58,18 @@ async def main():
 
     # Criando agente de noticias
     news_analyst = Agent(
-        role="Stock News Analyst",
-        goal="""Create a short summary of the market news releted to the stock
-        {ticket} company. Specify the current trend - up, down or sideways with
-        the news context. For each request stock asset, specify a number between 0
-        and 100, when 0 is extreme fear and 100 is extreme greed.""",
-        backstory="""You're highly experient analyzing the market trends and news
-        and have tracked assest for more then 10 years.
-        You're also master level analyts in the tradicional markets and  have deep
-        understanding of human psychology.
-        You're understand news, theirs tittles and information, but you look ate
-        those with a healt dose of skeepticism.
-        You consider also the sourse of the news articles.""",
+        role="Analista de notícias de ações",
+        goal="""Crie um breve resumo das notícias do mercado releted para a empresa de ações
+{ticket}. Especifique a tendência atual - para cima, para baixo ou para os lados com
+o contexto das notícias. Para cada ativo de ação solicitado, especifique um número entre 0
+e 100, quando 0 é medo extremo e 100 é ambição extrema.""",
+        backstory="""Você é altamente experiente em analisar tendências de mercado e notícias
+e acompanha ativos há mais de 10 anos.
+Você também é analista de nível mestre em mercados tradicionais e tem profundo
+entendimento da psicologia humana.
+Você entende notícias, seus títulos e informações, mas olha para
+aqueles com uma boa dose de ceticismo.
+Você também considera a fonte dos artigos de notícias.""",
         verbose=True,
         llm=llm,
         max_iter=5,
@@ -83,36 +80,39 @@ async def main():
 
     # Criando tarefa do agente de noticias
     get_news = Task(
-        description=f"""Take the stock and always include BTC to it
-        (if not request).
-        Use  the search tool to search each one individually.
+        description=f"""Pegue o estoque e sempre inclua BTC nele
+(se não for solicitado).
+Use a ferramenta de busca para pesquisar cada um individualmente.
 
-        The current date is {datetime.now()}.
+A data atual é {datetime.now()}.
 
-        Compose the results into a helpfull report.""",
-        expected_output="""A summary of the overall market and one sentence
-        summary for each request asset.
-        Include a fear\greed score for each asset based on the news. Use the
-        format:
-        <STOCK ASSET>
-        <SUMMARY BASED ON THE NEWS>
-        <TREND PREDICTION>
-        <FEAR/GREED SCORE>""",
+Componha os resultados em um relatório útil.""",
+        expected_output="""Um resumo do mercado geral e um resumo de uma frase
+para cada ativo solicitado.
+Inclua uma pontuação de medo\ambição para cada ativo com base nas notícias. Use o
+formato:
+<ATIVO DE AÇÕES>
+<RESUMO COM BASE NAS NOTÍCIAS>
+<PREVISÃO DE TENDÊNCIAS>
+<PONTUAÇÃO DE MEDO/AMBIÇÃO>""",
         agent=news_analyst,
     )
 
 # Agente que irá escrever a analise de fato
     stock_analyst_white = Agent(
-        role="Senior Stock Analyts Writer",
-        goal="""Analyze the trends price and news and write an insighfull
-        compelling and informative 3 paragraph long newsletter based on the stock
-        report and price trend.""",
-        backstory="""You're widely accepted as the best stock analyst in the
-        market. You understand comples concepts and create compelling stories and
-        narratives that ressonate with wider audiences.
-        You understand macro factors and combine multiple theories - eg. cycle
-        theory and fundamental analyses. You're able to hold multiple opinions
-        when analyzing anything.""",
+        role="Escritor Analista Sênior de Ações",
+        goal="""Analise as tendências de preços e notícias e escreva um boletim informativo, perspicaz, atraente e de 3 parágrafos com base no relatório de ações e na tendência de preços.""",
+        backstory="""Você é amplamente aceito como o melhor analista de ações do
+mercado. Você entende conceitos complexos e cria histórias e
+narrativas atraentes que ressoam com públicos mais amplos.
+Você entende fatores macro e combina múltiplas teorias - por exemplo, teoria do
+ciclo e análises fundamentais. Você é capaz de sustentar múltiplas opiniões
+ao analisar qualquer coisa.Você é amplamente aceito como o melhor analista de ações do
+mercado. Você entende conceitos complexos e cria histórias e
+narrativas atraentes que ressoam com públicos mais amplos.
+Você entende fatores macro e combina múltiplas teorias - por exemplo, teoria do
+ciclo e análises fundamentais. Você é capaz de sustentar múltiplas opiniões
+ao analisar qualquer coisa.""",
         verbose=True,
         llm=llm,
         max_inter=5,
@@ -122,21 +122,20 @@ async def main():
 
 # Tarefa do agente stock_analyst_white
     writeAnalyses = Task(
-        description="""Use the stock price trend and the stock news report to
-        create an analyses and white the newsletter about the {ticket} company
-        that is brief and highlights the most important points.
-        Focus on the stock price trend, news and fear/greed score. What are near
-        future considerations?
-        Include the previous analyses of stock trend and news summary.""",
-        expected_output="""An enloquent 3 paragraphs newsletter formated as
-        markdown in an easy readable manner. It shold contain:
+        description="""Use a tendência do preço das ações e o relatório de notícias sobre ações para
+criar uma análise e publicar o boletim informativo sobre a empresa {ticket}
+que seja breve e destaque os pontos mais importantes.
+Concentre-se na tendência do preço das ações, notícias e pontuação de medo/ambição. Quais são as considerações futuras próximas?
+Inclua as análises anteriores da tendência das ações e o resumo das notícias.""",
+        expected_output="""Um boletim informativo eloquente de 3 parágrafos formatado como
+markdown de uma maneira fácil de ler. Ele deve conter:
 
-        - 3 bullets executive summary
-        - Introduction - set the overall picture and spike up the interest
-        - Main part provides the meat  of  the analysis including  the news
-        summary and feed/greed scores
-        - Summary - key facts and concrete future trend prediction - up, dows or
-        sideways.""",
+- resumo executivo de 3 marcadores
+- Introdução - define o quadro geral e aumenta o interesse
+- A parte principal fornece o cerne da análise, incluindo o resumo de notícias
+e pontuações de feed/greed
+- Resumo - fatos principais e previsão concreta de tendências futuras - para cima, para baixo ou
+para os lados.""",
         agent=stock_analyst_white,
         context=[getStockPrice, get_news],
     )
